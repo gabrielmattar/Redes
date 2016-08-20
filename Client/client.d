@@ -3,20 +3,20 @@ import std.stdio;
 import std.file;
 
 void main() {
-    auto socket = new Socket(AddressFamily.INET,  SocketType.STREAM);
     char[1024] buffer;
 
-    socket.connect(new InternetAddress("localhost", 6666));
-
-    auto received = socket.receive(buffer); // wait for the server to say hello
-
-    writeln(buffer[0 .. received]);
     foreach(char [] line; stdin.byLine) {
+
+    auto socket = new Socket(AddressFamily.INET,  SocketType.STREAM);
+      socket.connect(new InternetAddress("192.168.0.17", 6665));
+
+
+      // wait for the server to say hello
+      auto received = socket.receive(buffer);
 
 
       auto stream = File(line, "r+");
       socket.send(line[0 .. line.length]);
-
 
 
       auto inbytes = new char[1024];
@@ -33,11 +33,11 @@ void main() {
       }
 
       //Enviando bytes finais do arquivo
-      inbytes = new char[resto];
+      inbytes = new char[cast(int)resto];
       stream.rawRead(inbytes);
       socket.send(inbytes);
+      socket.close();
 
-      //writeln(buffer[0 .. socket.receive(buffer)]);
     }
 
 }

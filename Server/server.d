@@ -5,48 +5,34 @@ import std.file;
 void main() {
 
    auto listener = new Socket(AddressFamily.INET, SocketType.STREAM);
-   listener.bind(new InternetAddress("localhost", 6666));
+   listener.bind(new InternetAddress("192.168.0.17", 6665));
    listener.listen(10);
 
-   auto readSet = new SocketSet();
-   Socket[] connectedClients;
-   char[1024] buffer;
+   char [1024] buffer;
    char[1024] name;
+
+   Socket client;
 
    bool isRunning = true;
 
    while(isRunning) {
-       readSet.reset();
-       readSet.add(listener);
-       foreach(client; connectedClients) readSet.add(client);
-       if(Socket.select(readSet, null, null)) {
-          foreach(client; connectedClients)
-            if(readSet.isSet(client)){
 
-              auto len = client.receive(name);
+      client = listener.accept();
+      client.send("Conectado!");
 
-              auto stream = File(name[0 .. len], "w+");
+      auto len = client.receive(name);
+
+      auto stream = File(name[0 .. len], "w+");
 
 
-              auto got = client.receive(buffer);
+      auto got = client.receive(buffer);
 
-              while(got == 1024) {
-                  // read from it and echo it back
+      while(got != 0) {
+          stream.rawWrite(buffer[0 .. got]);
+    		  got = client.receive(buffer[0 .. got]);
+      }
 
-                  stream.rawWrite(buffer[0 .. got]);
-                  got = client.receive(buffer);
-              }
-              writeln("Recebido");
+  }
 
-            }
-          if(readSet.isSet(listener)) {
-             // the listener is ready to read, that means
-             // a new client wants to connect. We accept it here.
-             auto newSocket = listener.accept();
-             newSocket.send("Conectado!"); // say hello
-             connectedClients ~= newSocket; // add to our list
-          }
-       }
-   }
 
 }
